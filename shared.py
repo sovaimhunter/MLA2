@@ -42,11 +42,12 @@ def load_base():
     return df
 
 
-def load_data(test_size=0.2, scale=True):
+def load_data(test_size=0.2, scale=True, return_groups=False):
     """Load, split, and optionally scale data; results are cached (used by RQ1)."""
     key = (test_size, scale)
     if key in _cache:
-        return _cache[key]
+        result = _cache[key]
+        return result if return_groups else result[:4]
 
     df = pd.read_csv(DATA_PATH)
     df["map"] = LabelEncoder().fit_transform(df["map"])
@@ -63,14 +64,15 @@ def load_data(test_size=0.2, scale=True):
 
     X_train, X_test = X[train_idx], X[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
+    train_round_ids = round_ids.values[train_idx]
 
     if scale:
         sc = StandardScaler()
         X_train = sc.fit_transform(X_train)
         X_test  = sc.transform(X_test)
 
-    _cache[key] = (X_train, X_test, y_train, y_test)
-    return X_train, X_test, y_train, y_test
+    _cache[key] = (X_train, X_test, y_train, y_test, train_round_ids)
+    return (X_train, X_test, y_train, y_test, train_round_ids) if return_groups else (X_train, X_test, y_train, y_test)
 
 
 def engineer_features(df):

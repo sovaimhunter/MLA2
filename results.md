@@ -17,7 +17,7 @@
 
 | Model | Best Params | Best CV Acc |
 |---|---|---|
-| Random Forest | n_estimators=500, max_depth=10, min_samples_split=2, min_samples_leaf=1, max_features=0.5 | — (pre-set) |
+| Random Forest | n_estimators=500, max_depth=10, min_samples_split=2, min_samples_leaf=1, max_features=0.5 | 0.7502 |
 | XGBoost | subsample=0.7, reg_alpha=0, n_estimators=300, min_child_weight=1, max_depth=5, learning_rate=0.05, colsample_bytree=0.8 | 0.7505 |
 | Logistic Regression | C=0.01, solver=lbfgs | 0.7472 |
 | Neural Network | learning_rate=0.001, dropout=0.2, hidden_dim=128 | val_acc=0.7510 |
@@ -168,89 +168,22 @@ NN Training loss: 0.4362 → 0.3883 (epoch 5→30)
 
 ---
 
-## RQ3: Feature Engineering
+## RQ3: Model Error Analysis by Round Situation
 
-### Feature Subset Comparison (Selective Diffs)
+> Overall acc = 76.2%  |  Model: Random Forest (n_estimators=500, max_depth=20)
 
-| Feature Set | # Features | Accuracy | F1 |
+### Situation Distribution & Accuracy
+
+| Situation | N | Share | Accuracy | Error Rate |
+|---|---|---|---|---|
+| Close | 16,655 | 68.1% | 73.3% | 26.7% |
+| One-Sided | 6,279 | 25.7% | **95.7%** | 4.3% |
+| Comeback | 1,523 | 6.2% | 27.5% | **72.5%** |
+
+### Model Confidence Distribution (P(CT wins))
+
+| Situation | Low conf (<0.4) | Uncertain (0.4–0.6) | High conf (>0.6) |
 |---|---|---|---|
-| All features (raw + engineered) | 108 | 0.7577 | 0.7575 |
-| Survival only | 11 | 0.7409 | 0.7407 |
-| Economic only | 13 | 0.7352 | 0.7352 |
-
-### Top 20 Feature Importances (All Features model)
-
-| Rank | Feature | Importance | Category |
-|---|---|---|---|
-| 1 | armor_diff | 0.1032 | survival |
-| 2 | weapon_value_diff | 0.0665 | economic |
-| 3 | health_diff | 0.0488 | survival |
-| 4 | helmets_diff | 0.0487 | economic |
-| 5 | players_alive_diff | 0.0431 | survival |
-| 6 | ct_armor | 0.0429 | survival |
-| 7 | ct_weapon_value | 0.0418 | economic |
-| 8 | t_armor | 0.0383 | survival |
-| 9 | t_weapon_value | 0.0354 | economic |
-| 10 | money_diff | 0.0326 | economic |
-| 11 | t_money | 0.0303 | economic |
-| 12 | ct_money | 0.0296 | economic |
-| 13 | grenade_diff | 0.0274 | economic |
-| 14 | time_left | 0.0222 | other |
-| 15 | t_helmets | 0.0215 | economic |
-| 16 | t_score | 0.0175 | other |
-| 17 | ct_total_grenades | 0.0173 | economic |
-| 18 | ct_score | 0.0171 | other |
-| 19 | t_total_grenades | 0.0161 | economic |
-| 20 | t_health | 0.0158 | survival |
-
-### Diff-ification Strategy Comparison
-
-| Strategy | # Features | Accuracy | F1 |
-|---|---|---|---|
-| Raw only | 96 | **0.7623** | **0.7621** |
-| Diff only | 52 | 0.7564 | 0.7562 |
-| Raw + All diffs | 145 | 0.7570 | 0.7568 |
-
-### Top 10 Features per Strategy
-
-**Raw only**
-| Feature | Importance |
-|---|---|
-| ct_armor | 0.0840 |
-| t_armor | 0.0840 |
-| t_helmets | 0.0583 |
-| t_money | 0.0479 |
-| ct_money | 0.0478 |
-| ct_helmets | 0.0391 |
-| t_health | 0.0376 |
-| ct_defuse_kits | 0.0373 |
-| ct_health | 0.0351 |
-| time_left | 0.0317 |
-
-**Diff only**
-| Feature | Importance |
-|---|---|
-| diff_armor | 0.1627 |
-| diff_weapon_value | 0.0954 |
-| diff_helmets | 0.0739 |
-| diff_health | 0.0664 |
-| ct_weapon_value | 0.0643 |
-| diff_players_alive | 0.0557 |
-| diff_money | 0.0541 |
-| t_weapon_value | 0.0502 |
-| time_left | 0.0366 |
-| diff_score | 0.0289 |
-
-**Raw + All diffs**
-| Feature | Importance |
-|---|---|
-| diff_armor | 0.1018 |
-| diff_weapon_value | 0.0603 |
-| diff_helmets | 0.0437 |
-| diff_health | 0.0421 |
-| diff_players_alive | 0.0407 |
-| ct_armor | 0.0404 |
-| t_armor | 0.0378 |
-| ct_weapon_value | 0.0375 |
-| t_weapon_value | 0.0348 |
-| diff_money | 0.0286 |
+| Close | 31% | 38% | 31% |
+| One-Sided | 47% | 12% | 41% |
+| Comeback | 29% | **42%** | 29% |

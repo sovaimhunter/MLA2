@@ -40,36 +40,25 @@ def run_rf():
     f1_before  = f1_score(y_test, preds_base, average="weighted")
     print(f"Baseline  acc={acc_before:.4f}  f1={f1_before:.4f}")
 
-    # TODO: 拿到数据后取消注释，重新跑搜索
-    # param_dist = {
-    #     "n_estimators":      [300, 500, 800, 1000],
-    #     "max_depth":         [10, 20, 30, None],
-    #     "min_samples_split": [2, 5, 10],
-    #     "min_samples_leaf":  [1, 2, 4],
-    #     "max_features":      ["sqrt", 0.3, 0.5, 0.7],
-    # }
-    # search = RandomizedSearchCV(
-    #     RandomForestClassifier(random_state=42, n_jobs=-1),
-    #     param_dist, n_iter=30, cv=3,
-    #     scoring="accuracy", random_state=42, n_jobs=-1, verbose=1,
-    # )
-    # search.fit(X_train, y_train)
-    # preds_tuned = search.best_estimator_.predict(X_test)
-    # print(f"\nBest params: {search.best_params_}")
-    # print(f"Best CV accuracy: {search.best_score_:.4f}")
-
-    # 临时：直接使用已知最优参数，跳过搜索
-    best_model = RandomForestClassifier(
-        n_estimators=500, max_depth=10, min_samples_split=2,
-        min_samples_leaf=1, max_features=0.5,
-        random_state=42, n_jobs=-1,
+    param_dist = {
+        "n_estimators":      [300, 500, 800, 1000],
+        "max_depth":         [10, 20, 30, None],
+        "min_samples_split": [2, 5, 10],
+        "min_samples_leaf":  [1, 2, 4],
+        "max_features":      ["sqrt", 0.3, 0.5, 0.7],
+    }
+    search = RandomizedSearchCV(
+        RandomForestClassifier(random_state=42, n_jobs=-1),
+        param_dist, n_iter=30, cv=3,
+        scoring="accuracy", random_state=42, n_jobs=-1, verbose=1,
     )
-    best_model.fit(X_train, y_train)
-    preds_tuned = best_model.predict(X_test)
+    search.fit(X_train, y_train)
+    preds_tuned = search.best_estimator_.predict(X_test)
     acc_after = accuracy_score(y_test, preds_tuned)
     f1_after  = f1_score(y_test, preds_tuned, average="weighted")
 
-    print(f"\nBest params: n_estimators=500, max_depth=10, min_samples_split=2, min_samples_leaf=1, max_features=0.5")
+    print(f"\nBest params: {search.best_params_}")
+    print(f"Best CV accuracy: {search.best_score_:.4f}")
     print(f"Tuned     acc={acc_after:.4f}  f1={f1_after:.4f}")
     print(classification_report(y_test, preds_tuned, target_names=["CT", "T"]))
 
@@ -172,12 +161,13 @@ def run_nn():
     import torch
     import torch.nn as nn
     from torch.utils.data import DataLoader, TensorDataset
+    from sklearn.model_selection import GroupShuffleSplit
 
     print("\n" + "="*55)
     print("  RQ1 — Neural Network")
     print("="*55)
 
-    X_train, X_test, y_train, y_test = load_data()
+    X_train, X_test, y_train, y_test, train_round_ids = load_data(return_groups=True)
 
     SEARCH_SPACE = {
         "learning_rate": [1e-3, 5e-3],
@@ -185,8 +175,8 @@ def run_nn():
         "hidden_dim":    [128, 256],
     }
     VAL_RATIO    = 0.15
-    EPOCHS_SRCH  = 10
-    EPOCHS_FINAL = 30
+    EPOCHS_SRCH  = 50
+    EPOCHS_FINAL = 100
 
     class RoundNet(nn.Module):
         def __init__(self, input_dim, hidden_dim, dropout):
@@ -232,9 +222,10 @@ def run_nn():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    n_val = int(len(X_train) * VAL_RATIO)
-    X_tr, X_val = X_train[n_val:], X_train[:n_val]
-    y_tr, y_val = y_train[n_val:], y_train[:n_val]
+    gss_val = GroupShuffleSplit(n_splits=1, test_size=VAL_RATIO, random_state=42)
+    tr_idx, val_idx = next(gss_val.split(X_train, y_train, groups=train_round_ids))
+    X_tr, X_val = X_train[tr_idx], X_train[val_idx]
+    y_tr, y_val = y_train[tr_idx], y_train[val_idx]
 
     # Baseline: default small network
     base_model = _train(X_tr, y_tr, lr=1e-3, dropout=0.3, hidden_dim=128,
