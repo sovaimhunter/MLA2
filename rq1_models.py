@@ -40,25 +40,36 @@ def run_rf():
     f1_before  = f1_score(y_test, preds_base, average="weighted")
     print(f"Baseline  acc={acc_before:.4f}  f1={f1_before:.4f}")
 
-    param_dist = {
-        "n_estimators":      [300, 500, 800, 1000],
-        "max_depth":         [10, 20, 30, None],
-        "min_samples_split": [2, 5, 10],
-        "min_samples_leaf":  [1, 2, 4],
-        "max_features":      ["sqrt", 0.3, 0.5, 0.7],
-    }
-    search = RandomizedSearchCV(
-        RandomForestClassifier(random_state=42, n_jobs=-1),
-        param_dist, n_iter=30, cv=3,
-        scoring="accuracy", random_state=42, n_jobs=-1, verbose=1,
+    # TODO: 拿到数据后取消注释，重新跑搜索
+    # param_dist = {
+    #     "n_estimators":      [300, 500, 800, 1000],
+    #     "max_depth":         [10, 20, 30, None],
+    #     "min_samples_split": [2, 5, 10],
+    #     "min_samples_leaf":  [1, 2, 4],
+    #     "max_features":      ["sqrt", 0.3, 0.5, 0.7],
+    # }
+    # search = RandomizedSearchCV(
+    #     RandomForestClassifier(random_state=42, n_jobs=-1),
+    #     param_dist, n_iter=30, cv=3,
+    #     scoring="accuracy", random_state=42, n_jobs=-1, verbose=1,
+    # )
+    # search.fit(X_train, y_train)
+    # preds_tuned = search.best_estimator_.predict(X_test)
+    # print(f"\nBest params: {search.best_params_}")
+    # print(f"Best CV accuracy: {search.best_score_:.4f}")
+
+    # 临时：直接使用已知最优参数，跳过搜索
+    best_model = RandomForestClassifier(
+        n_estimators=500, max_depth=10, min_samples_split=2,
+        min_samples_leaf=1, max_features=0.5,
+        random_state=42, n_jobs=-1,
     )
-    search.fit(X_train, y_train)
-    preds_tuned = search.best_estimator_.predict(X_test)
+    best_model.fit(X_train, y_train)
+    preds_tuned = best_model.predict(X_test)
     acc_after = accuracy_score(y_test, preds_tuned)
     f1_after  = f1_score(y_test, preds_tuned, average="weighted")
 
-    print(f"\nBest params: {search.best_params_}")
-    print(f"Best CV accuracy: {search.best_score_:.4f}")
+    print(f"\nBest params: n_estimators=500, max_depth=10, min_samples_split=2, min_samples_leaf=1, max_features=0.5")
     print(f"Tuned     acc={acc_after:.4f}  f1={f1_after:.4f}")
     print(classification_report(y_test, preds_tuned, target_names=["CT", "T"]))
 

@@ -24,15 +24,15 @@ def run_figures():
         "axes.spines.right": False,
     })
 
-    # ── hardcoded results (update after re-running rq1_models.py all) ──
+    # ── results from rq1_models.py all / rq2_temporal.py all ──
     models     = ["Random Forest", "XGBoost", "Neural Network", "Logistic Regression"]
-    acc_before = [0.7577, 0.7590, 0.7485, 0.7482]
-    acc_after  = [0.7606, 0.7542, 0.7508, 0.7489]
+    acc_before = [0.7559, 0.7530, 0.7478, 0.7482]
+    acc_after  = [0.7602, 0.7543, 0.7496, 0.7489]
 
     segments  = ["Early\n(>120s)", "Mid\n(60–120s)", "Late\n(<60s)"]
-    seg_acc   = [0.7652, 0.6854, 0.8147]
-    eco_share = [0.755, 0.719, 0.506]
-    sur_share = [0.220, 0.258, 0.478]
+    seg_acc   = [0.7643, 0.6852, 0.8147]
+    eco_share = [0.749, 0.717, 0.492]
+    sur_share = [0.228, 0.261, 0.493]
 
     features    = ["armor_diff", "weapon_value_diff", "health_diff", "helmets_diff",
                    "players_alive_diff", "ct_armor", "ct_weapon_value", "t_armor",
@@ -61,8 +61,8 @@ def run_figures():
     ax.legend(frameon=False)
     ax.axhline(75, color="gray", linestyle="--", linewidth=0.8, alpha=0.5)
     ax.text(3.6, 75.2, "75%", color="gray", fontsize=9)
-    ax.axhline(76.06, color="#1565C0", linestyle=":", linewidth=0.8, alpha=0.4)
-    ax.text(3.6, 76.2, "Best\n76.1%", color="#1565C0", fontsize=8)
+    ax.axhline(76.02, color="#1565C0", linestyle=":", linewidth=0.8, alpha=0.4)
+    ax.text(3.6, 76.2, "Best\n76.0%", color="#1565C0", fontsize=8)
     plt.tight_layout()
     plt.savefig("figures/fig1_model_comparison.png", dpi=150, bbox_inches="tight")
     plt.close()
@@ -79,8 +79,8 @@ def run_figures():
     ax1.set_ylabel("Test Accuracy (%)")
     ax1.set_title("Prediction Accuracy by Round Phase", fontsize=11)
     ax1.fill_between(range(3), [v*100 for v in seg_acc], 63, alpha=0.08, color="#1565C0")
-    ax1.axhline(76.06, color="gray", linestyle="--", linewidth=0.8, alpha=0.6)
-    ax1.text(2.05, 76.3, "Overall\n76.1%", color="gray", fontsize=8)
+    ax1.axhline(76.02, color="gray", linestyle="--", linewidth=0.8, alpha=0.6)
+    ax1.text(2.05, 76.3, "Overall\n76.0%", color="gray", fontsize=8)
 
     bar_w = 0.45
     ax2.bar(range(3), [v*100 for v in eco_share], bar_w, label="Economic", color="#FF9800")
@@ -147,7 +147,8 @@ def run_figures():
     X_tr = sc.fit_transform(X[tr_idx])
     X_te = sc.transform(X[te_idx])
 
-    rf = RandomForestClassifier(n_estimators=500, max_depth=20, min_samples_split=5,
+    rf = RandomForestClassifier(n_estimators=500, max_depth=10, min_samples_split=2,
+                                min_samples_leaf=1, max_features=0.5,
                                 random_state=42, n_jobs=-1)
     rf.fit(X_tr, y[tr_idx])
     preds = rf.predict(X_te)
