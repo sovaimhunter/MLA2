@@ -20,6 +20,14 @@ DATA_PATH = "csgo_round_snapshots.csv"
 _cache = {}
 
 
+def _get_device():
+    try:
+        import torch
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    except ImportError:
+        return "cpu"
+
+
 # ── Data loading ────────────────────────────────────────────
 
 def _make_round_ids(df):
@@ -105,8 +113,11 @@ def run_xgboost():
         "reg_alpha":        [0, 0.1, 0.5],
     }
 
+    device = _get_device()
+    print(f"XGBoost using device: {device}")
     base = xgb.XGBClassifier(
         eval_metric="logloss", tree_method="hist",
+        device=device,
         random_state=42, n_jobs=-1
     )
     search = RandomizedSearchCV(
@@ -134,7 +145,7 @@ def run_lr():
         "solver": ["lbfgs", "saga"],
     }
 
-    base = LogisticRegression(max_iter=1000, random_state=42, n_jobs=-1)
+    base = LogisticRegression(max_iter=1000, random_state=42)
     search = GridSearchCV(base, param_grid, cv=3, scoring="accuracy", n_jobs=-1, verbose=1)
     search.fit(X_train, y_train)
 
