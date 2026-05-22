@@ -57,3 +57,19 @@ logs/
 outputs/
 results/
 plots/
+
+# Content directory
+内容/
+
+# ACL / LaTeX format files
+*.tex
+*.sty
+*.bib
+*.aux
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+overleaf_upload.zip
+*.zip
+*.docx

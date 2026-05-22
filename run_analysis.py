@@ -57,7 +57,6 @@ def run_figures():
     ax.set_xticklabels(models, fontsize=10)
     ax.set_ylabel("Test Accuracy (%)")
     ax.set_ylim(68, 80)
-    ax.set_title("Figure 1: Model Accuracy Before and After Hyperparameter Tuning", fontsize=12, pad=12)
     ax.legend(frameon=False)
     ax.axhline(75, color="gray", linestyle="--", linewidth=0.8, alpha=0.5)
     ax.text(3.6, 75.2, "75%", color="gray", fontsize=9)
@@ -77,7 +76,6 @@ def run_figures():
                  fontsize=10, fontweight="bold", color="#1565C0")
     ax1.set_ylim(63, 87)
     ax1.set_ylabel("Test Accuracy (%)")
-    ax1.set_title("Prediction Accuracy by Round Phase", fontsize=11)
     ax1.fill_between(range(3), [v*100 for v in seg_acc], 63, alpha=0.08, color="#1565C0")
     ax1.axhline(76.02, color="gray", linestyle="--", linewidth=0.8, alpha=0.6)
     ax1.text(2.05, 76.3, "Overall\n76.0%", color="gray", fontsize=8)
@@ -98,11 +96,8 @@ def run_figures():
     ax2.set_xticks(range(3))
     ax2.set_xticklabels(segments)
     ax2.set_ylabel("Feature Importance Share (%)")
-    ax2.set_title("Economic vs Survival Feature Share\nby Round Phase", fontsize=11)
     ax2.set_ylim(0, 110)
     ax2.legend(frameon=False, loc="upper right", fontsize=9)
-    fig.suptitle("Figure 2: Temporal Analysis of Prediction Difficulty and Feature Importance",
-                 fontsize=12, y=1.02)
     plt.tight_layout()
     plt.savefig("figures/fig2_temporal_analysis.png", dpi=150, bbox_inches="tight")
     plt.close()
@@ -119,7 +114,6 @@ def run_figures():
     ax.set_yticklabels(features, fontsize=10)
     ax.invert_yaxis()
     ax.set_xlabel("Mean Decrease in Impurity (Feature Importance)")
-    ax.set_title("Figure 3: Top 10 Feature Importances (Random Forest)", fontsize=12, pad=12)
     ax.set_xlim(0, 0.125)
     legend_patches = [
         mpatches.Patch(color="#2196F3", label="Survival"),
@@ -157,7 +151,6 @@ def run_figures():
     fig, ax = plt.subplots(figsize=(5.5, 4.5))
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=le.classes_)
     disp.plot(ax=ax, colorbar=False, cmap="Blues")
-    ax.set_title("Figure 4: Confusion Matrix — Random Forest (Test Set)", fontsize=11, pad=12)
     total = cm.sum()
     for i in range(2):
         for j in range(2):
@@ -168,6 +161,51 @@ def run_figures():
     plt.savefig("figures/fig4_confusion_matrix.png", dpi=150, bbox_inches="tight")
     plt.close()
     print("Saved fig4_confusion_matrix.png")
+
+    # Figure 3 (error analysis): hardcoded from rq3_errors.py run
+    situations   = ["Close\nRounds", "One-Sided\nRounds", "Comeback\nRounds"]
+    sit_acc      = [73.3, 95.7, 27.5]
+    sit_n        = [16655, 6279, 1523]
+    sit_colors   = ["#64B5F6", "#1565C0", "#E53935"]
+    conf_low     = [31, 47, 29]
+    conf_mid     = [38, 12, 42]
+    conf_high    = [31, 41, 29]
+    overall_acc  = 76.2
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+    bars = ax1.bar(situations, sit_acc, color=sit_colors, edgecolor="white", linewidth=0.8, width=0.5)
+    for bar, acc, n, col in zip(bars, sit_acc, sit_n, sit_colors):
+        ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() - 5,
+                 f"{acc:.1f}%", ha="center", va="top", fontsize=12,
+                 fontweight="bold", color="white" if acc > 40 else col)
+        ax1.text(bar.get_x() + bar.get_width()/2, 3,
+                 f"n={n:,}", ha="center", va="bottom", fontsize=9, color="white")
+    ax1.axhline(overall_acc, color="gray", linestyle="--", linewidth=1.2)
+    ax1.text(-0.45, overall_acc + 1.5, f"Overall acc ({overall_acc}%)", color="gray", fontsize=9)
+    ax1.set_ylabel("Accuracy (%)")
+    ax1.set_ylim(0, 110)
+
+    x = np.arange(len(situations))
+    w = 0.5
+    b1 = ax2.bar(x, conf_low,  w, label="Low conf (<0.4)",    color="#F48FB1")
+    b2 = ax2.bar(x, conf_mid,  w, bottom=conf_low,            label="Uncertain (0.4–0.6)", color="#FFF176")
+    b3 = ax2.bar(x, conf_high, w, bottom=[l+m for l, m in zip(conf_low, conf_mid)],
+                 label="High conf (>0.6)", color="#A5D6A7")
+    for i, (lo, mi, hi) in enumerate(zip(conf_low, conf_mid, conf_high)):
+        ax2.text(i, lo/2,        f"{lo}%", ha="center", va="center", fontsize=9, fontweight="bold")
+        ax2.text(i, lo + mi/2,   f"{mi}%", ha="center", va="center", fontsize=9, fontweight="bold")
+        ax2.text(i, lo + mi + hi/2, f"{hi}%", ha="center", va="center", fontsize=9, fontweight="bold")
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(situations)
+    ax2.set_ylabel("Share of Snapshots (%)")
+    ax2.set_ylim(0, 115)
+    ax2.legend(frameon=False, loc="upper right", fontsize=9)
+
+    plt.tight_layout()
+    plt.savefig("figures/fig3_error_analysis.png", dpi=150, bbox_inches="tight")
+    plt.close()
+    print("Saved fig3_error_analysis.png")
 
     print("\nAll figures saved to figures/")
 

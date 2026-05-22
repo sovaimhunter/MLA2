@@ -72,6 +72,18 @@ For RQ2, the data was further divided into three temporal segments based on `tim
 
 Each segment was split independently using the same group-based strategy.
 
+#### Feature Category Definitions
+
+To interpret feature importance by phase (RQ2), each feature is assigned to one of three categories based on keyword matching against its column name:
+
+| Category | Keywords matched | Example features |
+|---|---|---|
+| **Economic** | money, helmet, defuse, weapon, grenade, score | ct_money, t_helmets, ct_defuse_kits, ct_weapon_ak47, t_grenade_flashbang, ct_score |
+| **Survival** | health, armor, players_alive, bomb_planted, time_left | ct_health, t_armor, ct_players_alive, bomb_planted, time_left |
+| **Other** | (none of the above) | map |
+
+Category importance is computed as the sum of Random Forest feature importances for all features in that category, then normalised to sum to 100% within each segment.
+
 ### 3.3 Round Situation Classification
 
 To investigate where model errors concentrate, we classify each test-set snapshot into one of three mutually exclusive situation types based on three difference variables:
